@@ -22,25 +22,36 @@ public class Day5
         stopwatch.Stop();
         Console.WriteLine($"Executed first part in {stopwatch.Elapsed}");
 
-        Console.WriteLine($"[{DateTime.Now}] Preparring to process: {seedsPart2.Sum(s => s.length)}, biggest group is {seedsPart2.Max(s => s.length)}");
-
         stopwatch.Restart();
-        var bag = new ConcurrentBag<long>();
-        Parallel.ForEach(seedsPart2, (pair, state, i) =>
-            {
-                Console.WriteLine($"    ({i,-1}) Starting next {pair.length} seeds");
 
-                var seedsToCheck = LongRange(pair.start, pair.length, i);
-                foreach (var map in maps)
+        var bag = new ConcurrentBag<long>();
+        LongClass minimalValue = new LongClass();
+        minimalValue.Value = long.MaxValue;
+
+        LongClass offset = new LongClass();
+        int valuesPerThread = 10_000;
+        int threads = 10;
+
+        Parallel.For(0, threads, (i) =>
+        {
+            while (true)
+            {
+                long start;
+                lock (offset)
                 {
-                    seedsToCheck = seedsToCheck.Select(map.MapValue);
+                    start = offset.Value;
+                    offset.Value += valuesPerThread;
                 }
 
-                long min = seedsToCheck.Min();
+                if (LookForSeed(start, valuesPerThread, i, seedsPart2, maps, bag, minimalValue))
+                {
+                    return;
+                } 
+            }
+        });
 
-                Console.WriteLine($"    ({i,-1}) Finished");
-                bag.Add(min);
-            });
+        Console.WriteLine($"Finished batch (checked {offset} values)");
+
         Console.WriteLine($"[{DateTime.Now}] Finished processing");
 
         stopwatch.Stop();
@@ -50,6 +61,48 @@ public class Day5
         Console.WriteLine($"Day  5 II: {bag.Min()}");
     }
 
+    private static bool LookForSeed(long start, long length, long i, List<(long start, long length)> seedsPart2, List<Map> maps, ConcurrentBag<long> bag, LongClass minimalValue)
+    {
+        Console.WriteLine($"    ({i,2}) Trying next {length} locations starting at {start}");
+
+        var potentialSeeds = LongRange(start, length).Select(l => (l, s: l));
+
+        for (int j = maps.Count - 1; j >= 0; j--)
+        {
+            int index = j;
+            potentialSeeds = potentialSeeds.Select(x => (x.l, maps[index].MapValueInverse(x.s)));
+        }
+
+        foreach (var ps in potentialSeeds)
+        {
+            if (ps.l > minimalValue.Value)
+            {
+                Console.WriteLine($"    ({i,2}) Killed");
+                return true;
+            }
+
+            for (int si = 0; si < seedsPart2.Count; si++)
+            {
+                if (ps.s >= seedsPart2[si].start && ps.s < seedsPart2[si].start + seedsPart2[si].length)
+                {
+                    Console.WriteLine($"    ({i,2}) Finished");
+                    bag.Add(ps.l);
+
+                    lock (minimalValue)
+                    {
+                        if (minimalValue.Value > ps.l)
+                        {
+                            minimalValue.Value = ps.l;
+                        }
+                    }
+
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 
     private static (List<long> seeds, List<(long start, long length)> seedsPart2, List<Map> maps) ParseInput(StreamReader stream)
     {
@@ -87,20 +140,23 @@ public class Day5
         return (seeds, seedsPart2, maps);
     }
 
-    private static IEnumerable<long> LongRange(long start, long length, long group)
+    private static IEnumerable<long> LongRange(long start, long count)
     {
-        for (long i = 0; i < length; i++)
+        for (long i = 0; i < count; i++)
         {
-            if (i != 0 && i % 10000000 == 0) Console.WriteLine($"   [{DateTime.Now}] ({group,-1}) Processed 10 000 000 seeds ({(i / (double)length) * 100:F2}%)");
-
             yield return i + start;
         }
+    }
+
+    class LongClass
+    {
+        public long Value;
     }
 
     class Map
     {
         private readonly string title;
-        private readonly List<Mapping> mappings = new();
+        public readonly List<Mapping> Mappings = new();
 
         public Map(string title)
         {
@@ -109,12 +165,12 @@ public class Day5
 
         public void AddMapping(long destinationStart, long sourceStart, long length)
         {
-            mappings.Add(new(destinationStart, sourceStart, length));
+            Mappings.Add(new(destinationStart, sourceStart, length));
         }
 
         public long MapValue(long source)
         {
-            foreach (var mapping in mappings)
+            foreach (var mapping in Mappings)
             {
                 if (mapping.IsInRange(source)) return mapping.MapValue(source);
             }
@@ -122,16 +178,45 @@ public class Day5
             return source;
         }
 
-        record struct Mapping(long DestinationStart, long SourceStart, long Lenght)
+        public long MapValueInverse(long destination)
+        {
+            foreach (var mapping in Mappings)
+            {
+                if (mapping.IsInRangeInverse(destination)) return mapping.MapValueInverse(destination);
+            }
+
+            return destination;
+        }
+
+        public record struct Mapping(long DestinationStart, long SourceStart, long Lenght)
         {
             public readonly bool IsInRange(long value)
             {
                 return SourceStart <= value && value < SourceStart + Lenght;
+
+            }
+
+            public readonly bool IsInRangeInverse(long value)
+            {
+                return DestinationStart <= value && value < DestinationStart + Lenght;
             }
 
             public readonly long MapValue(long value)
             {
                 return DestinationStart + (value - SourceStart);
+            }
+
+            public readonly long MapValueInverse(long value)
+            {
+                return SourceStart + (value - DestinationStart);
+            }
+
+            public readonly IEnumerable<long> IterateAllDestinations()
+            {
+                for (long i = 0; i < Lenght; i++)
+                {
+                    yield return i + DestinationStart;
+                }
             }
         }
     }
