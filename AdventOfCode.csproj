@@ -11,6 +11,9 @@
     <None Update="D1\input.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="D5\input.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="D4\input.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
