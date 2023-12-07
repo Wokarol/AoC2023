@@ -5,4 +5,6 @@
 //new Day3().Execute(); 
 //new Day4().Execute();
 //new Day5().Execute();
-new Day6().Execute();
+//new Day6().Execute();
+new Day7().Execute();
+
