@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -14,8 +15,8 @@ public class Day8
 
         var nodesByName = nodes.ToDictionary(n => n.Name);
 
-        int steps1 = 0; // Part1(moves, nodesByName);
-        int steps2 = Part2(moves, nodes, nodesByName);
+        int steps1 = Part1(moves, nodesByName);
+        BigInteger steps2 = Part2(moves, nodes, nodesByName);
 
         Console.WriteLine($"Day  8 I : {steps1}");
         Console.WriteLine($"Day  8 II: {steps2}");
@@ -48,38 +49,43 @@ public class Day8
         return steps;
     }
 
-    private static int Part2(List<Move> moves, List<Node> nodes, Dictionary<string, Node> nodesByName)
+    private static BigInteger Part2(List<Move> moves, List<Node> nodes, Dictionary<string, Node> nodesByName)
     {
-        Queue<Move> movesQueue = new Queue<Move>(moves);
-        int steps = 0;
         var ghosts = nodes.Where(n => n.Name[2] == 'A').Select(n => new Ghost(nodesByName, n.Name)).ToList();
+        var loopCounts = new int[ghosts.Count];
 
-        Console.WriteLine($"Started {ghosts.Count} ghosts");
-
-        while (true)
+        for (int i = 0; i < ghosts.Count; i++)
         {
-            steps++;
-            var move = movesQueue.Dequeue();
-            movesQueue.Enqueue(move);
+            var g = ghosts[i];
 
-            bool allGhostsFinished = true;
-
-            for (int i = 0; i < ghosts.Count; i++)
+            int loops = 0;
+            while (true)
             {
-                var finished = ghosts[i].MakeAStep(move);
+                loops++;
 
-                if (!finished)
-                    allGhostsFinished = false;
+                for (int j = 0; j < moves.Count; j++)
+                {
+                    var move = moves[j];
+                    g.MakeAStep(move);
+                }
+
+                if (g.Current[2] == 'Z')
+                {
+                    break;
+                }
             }
 
-            if (steps % 10_000_000 == 0)
-                Console.WriteLine($"Finished next 10 000 000 steps, currently on: {steps}");
-
-            if (allGhostsFinished)
-                break;
+            loopCounts[i] = loops;
         }
 
-        return steps;
+        checked
+        {
+            return loopCounts
+                .Skip(1)
+                .Select(x => new BigInteger(x))
+                .Aggregate(new BigInteger(loopCounts[0]), (a, b) => lcm(a, b))
+                * moves.Count;
+        }
     }
 
     private (List<Move>, List<Node>) ParseInput(string path)
@@ -114,6 +120,8 @@ public class Day8
         private readonly Dictionary<string, Node> nodesByName;
         private string currentNode;
 
+        public string Current => currentNode;
+
         public Ghost(Dictionary<string, Node> nodes, string startingNode)
         {
             this.nodesByName = nodes;
@@ -134,6 +142,28 @@ public class Day8
                 return true;
 
             return false;
+        }
+    }
+
+    static BigInteger gcf(BigInteger a, BigInteger b)
+    {
+        checked
+        {
+            while (b != 0)
+            {
+                BigInteger temp = b;
+                b = a % b;
+                a = temp;
+            }
+        }
+        return a;
+    }
+
+    static BigInteger lcm(BigInteger a, BigInteger b)
+    {
+        checked
+        {
+            return (a / gcf(a, b)) * b; 
         }
     }
 
