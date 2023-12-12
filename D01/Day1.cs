@@ -7,7 +7,7 @@ public class Day1
 {
     public void Execute()
     {
-        var stream = File.OpenText("D1/input.txt");
+        var stream = File.OpenText("D01/input.txt");
 
         int sum = 0;
         int sumFull = 0;

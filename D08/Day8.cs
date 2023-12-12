@@ -11,7 +11,7 @@ public class Day8
 {
     public void Execute()
     {
-        var (moves, nodes) = ParseInput("D8/input.txt");
+        var (moves, nodes) = ParseInput("D08/input.txt");
 
         var nodesByName = nodes.ToDictionary(n => n.Name);
 

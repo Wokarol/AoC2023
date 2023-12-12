@@ -8,7 +8,7 @@ public class Day3
 {
     public void Execute()
     {
-        var lines = File.ReadAllLines("D3/input.txt");
+        var lines = File.ReadAllLines("D03/input.txt");
         var (map, digitGroups, stars) = ParseInput(lines);
 
 

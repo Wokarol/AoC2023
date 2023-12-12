@@ -8,7 +8,7 @@ public class Day4
 {
     public void Execute()
     {
-        var stream = File.OpenText("D4/input.txt");
+        var stream = File.OpenText("D04/input.txt");
         var cards = ParseInput(stream);
 
         var scores = cards.Select(c =>

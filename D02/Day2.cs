@@ -7,7 +7,7 @@ public class Day2
 {
     public void Execute()
     {
-        var stream = File.OpenText("D2/input.txt");
+        var stream = File.OpenText("D02/input.txt");
         var games = ParseInput(stream);
 
         var validGames = games.Where(g =>

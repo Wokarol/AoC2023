@@ -9,7 +9,7 @@ public class Day7
 {
     public void Execute()
     {
-        var hands = ParseInput("D7/input.txt");
+        var hands = ParseInput("D07/input.txt");
 
         var orderedHands = hands
             .OrderByDescending(h => (10 - h.type, h.normalizedCards));

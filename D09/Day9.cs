@@ -10,7 +10,7 @@ public class Day9
 {
     public void Execute()
     {
-        var data = ParseInput("D9/input.txt");
+        var data = ParseInput("D09/input.txt");
 
         var extrapolation = data.Select(d =>
             {

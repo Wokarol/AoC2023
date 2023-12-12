@@ -7,9 +7,11 @@ namespace AdventOfCode;
 
 public class Day5
 {
+    const bool extraLogging = false;
+
     public void Execute()
     {
-        var stream = File.OpenText("D5/input.txt");
+        var stream = File.OpenText("D05/input.txt");
         var (seeds, seedsPart2, maps) = ParseInput(stream);
 
         var stopwatch = new Stopwatch();
@@ -20,7 +22,7 @@ public class Day5
             mappedValues = mappedValues.Select(map.MapValue);
         }
         stopwatch.Stop();
-        Console.WriteLine($"Executed first part in {stopwatch.Elapsed}");
+        if (extraLogging) Console.WriteLine($"Executed first part in {stopwatch.Elapsed}");
 
         stopwatch.Restart();
 
@@ -50,12 +52,12 @@ public class Day5
             }
         });
 
-        Console.WriteLine($"Finished batch (checked {offset} values)");
+        if (extraLogging) Console.WriteLine($"Finished batch (checked {offset} values)");
 
-        Console.WriteLine($"[{DateTime.Now}] Finished processing");
+        if (extraLogging) Console.WriteLine($"[{DateTime.Now}] Finished processing");
 
         stopwatch.Stop();
-        Console.WriteLine($"Executed second part in {stopwatch.Elapsed}");
+        if (extraLogging) Console.WriteLine($"Executed second part in {stopwatch.Elapsed}");
 
         Console.WriteLine($"Day  5 I : {mappedValues.Min()}");
         Console.WriteLine($"Day  5 II: {bag.Min()}");
@@ -63,7 +65,7 @@ public class Day5
 
     private static bool LookForSeed(long start, long length, long i, List<(long start, long length)> seedsPart2, List<Map> maps, ConcurrentBag<long> bag, LongClass minimalValue)
     {
-        Console.WriteLine($"    ({i,2}) Trying next {length} locations starting at {start}");
+        if (extraLogging) Console.WriteLine($"    ({i,2}) Trying next {length} locations starting at {start}");
 
         var potentialSeeds = LongRange(start, length).Select(l => (l, s: l));
 
@@ -77,7 +79,7 @@ public class Day5
         {
             if (ps.l > minimalValue.Value)
             {
-                Console.WriteLine($"    ({i,2}) Killed");
+                if (extraLogging) Console.WriteLine($"    ({i,2}) Killed");
                 return true;
             }
 
@@ -85,7 +87,7 @@ public class Day5
             {
                 if (ps.s >= seedsPart2[si].start && ps.s < seedsPart2[si].start + seedsPart2[si].length)
                 {
-                    Console.WriteLine($"    ({i,2}) Finished");
+                    if (extraLogging) Console.WriteLine($"    ({i,2}) Finished");
                     bag.Add(ps.l);
 
                     lock (minimalValue)
