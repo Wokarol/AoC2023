@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -169,6 +169,6 @@ public class Day12
     }
 
     private record Row(List<SpringState> Springs, List<int> Groups);
-    enum SpringState { Unknown, Working, Damaged }
+    enum SpringState : byte { Unknown, Working, Damaged }
 }
 
