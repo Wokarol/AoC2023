@@ -40,18 +40,6 @@ public class Day15
                 if (lens != null)
                     box.Remove(lens);
             }
-
-            //Console.WriteLine($"After \"{instruction.Full}\"");
-            //for (int i = 0; i < boxes.Length; i++)
-            //{
-            //    var b = boxes[i];
-            //    if (b.Count == 0) continue;
-
-            //    Console.Write($"Box {i}: ");
-            //    Console.Write(string.Join(" ", b.Select(l => $"[{l.Label} {l.Focus}]")));
-            //    Console.WriteLine();
-            //}
-            //Console.WriteLine();
         }
 
         var sum = boxes.Select((b, boxI) =>
@@ -97,7 +85,7 @@ public class Day15
         {
             c += value[i];
             c *= 17;
-            c %= 256;
+            c &= 255;
         }
         return c;
     }
