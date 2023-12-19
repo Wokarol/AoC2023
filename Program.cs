@@ -16,4 +16,6 @@
 //new Day14().Execute();
 //new Day15().Execute();
 //new Day16().Execute();
-new Day17().Execute();
+//new Day17().Execute();
+//new Day18().Execute();
+new Day19().Execute();
