@@ -14,7 +14,8 @@ public class Day20
 
     public void Execute()
     {
-        var moduleMap = ParseInput("D20/input.txt");
+        var moduleMap1 = ParseInput("D20/input.txt");
+        var moduleMap2 = ParseInput("D20/input.txt"); // This allows us to mutate the maps... and was easier to do that proper reset
 
         // This shows that the graph ends with 4 modules feeding into single conj. Maybe LCM can help?
         // 
@@ -24,7 +25,7 @@ public class Day20
         int high = 0;
         for (int i = 0; i < 1000; i++)
         {
-            var (lowPulses, highPulses, _, _) = PulseButton(moduleMap);
+            var (lowPulses, highPulses) = PulseButton(moduleMap1);
 
             checked
             {
@@ -39,16 +40,8 @@ public class Day20
         }
 
 
-        //for (int i = 0; ; i++)
-        //{
-        //    var (_, _, _, enabled) = PulseButton(moduleMap);
-
-        //    if (enabled)
-        //    {
-        //        Console.WriteLine($"Day 20 II: {i}");
-        //        break;
-        //    }
-        //}
+        var fastestButton = ComputeNeededMachinePressed(moduleMap2);
+        Console.WriteLine($"Day 20 II: {fastestButton}");
     }
 
     private static void PrintMermaidGraph(Dictionary<string, Module> moduleMap)
@@ -68,6 +61,76 @@ public class Day20
                     Console.WriteLine($"    class {module.Name} conj");
 
             }
+        }
+    }
+
+    private long ComputeNeededMachinePressed(Dictionary<string, Module> moduleMap)
+    {
+        if (!moduleMap.TryGetValue("rx", out var machineModule))
+        {
+            Console.WriteLine("INCOMPATIBLE INPUT: There is no 'rx' module");
+            return -1;
+        }
+
+        if (machineModule.Inputs.Count != 1 || machineModule.Inputs[0].Mode != ModuleMode.Conj)
+        {
+            Console.WriteLine("INCOMPATIBLE INPUT: 'rx' has more than one conj input");
+            return -1;
+        }
+
+        var parent = machineModule.Inputs[0];
+        var keyModules = new List<Module>(parent.Inputs.Count);
+
+        foreach (var k in parent.Inputs)
+        {
+            if (k.Inputs.Count != 1 || k.Mode != ModuleMode.Conj)
+            {
+                Console.WriteLine("INCOMPATIBLE INPUT: Parent 'rx' has unexpected input");
+                return -1;
+            }
+
+            keyModules.Add(k);
+        }
+
+        List<int> loops = new(keyModules.Count);
+
+        int presses = 0;
+        while (keyModules.Count > 0)
+        {
+            presses += 1;
+            var _ = PulseButton(moduleMap);
+
+            for (int ki = keyModules.Count - 1; ki >= 0; ki--)
+            {
+                if (keyModules[ki].ReceivedLowPulseEver)
+                {
+                    keyModules.RemoveAt(ki);
+                    loops.Add(presses);
+                }
+            }
+        }
+
+        return loops.Aggregate(1L, (a, b) => lcm(a, b));
+    }
+    static long gcf(long a, long b)
+    {
+        checked
+        {
+            while (b != 0)
+            {
+                long temp = b;
+                b = a % b;
+                a = temp;
+            }
+        }
+        return a;
+    }
+
+    static long lcm(long a, long b)
+    {
+        checked
+        {
+            return (a / gcf(a, b)) * b;
         }
     }
 
@@ -133,7 +196,7 @@ public class Day20
         return moduleMap;
     }
 
-    private (int lowPulses, int highPulses, string state, bool machineEnabled) PulseButton(Dictionary<string, Module> moduleMap)
+    private (int lowPulses, int highPulses) PulseButton(Dictionary<string, Module> moduleMap)
     {
         int lowPulses = 0;
         int highPulses = 0;
@@ -151,23 +214,23 @@ public class Day20
             else lowPulses += 1;
         }
 
-        StringBuilder b = new StringBuilder();
+        //StringBuilder b = new StringBuilder();
 
-        foreach (var (_, m) in moduleMap)
-        {
-            b.Append(m.FlipFlopState ? '1' : '0');
-            b.Append(m.LastSentPulse ? '1' : '0');
-        }
+        //foreach (var (_, m) in moduleMap)
+        //{
+        //    b.Append(m.FlipFlopState ? '1' : '0');
+        //    b.Append(m.LastSentPulse ? '1' : '0');
+        //}
 
-        //Console.WriteLine(b.ToString());
+        ////Console.WriteLine(b.ToString());
 
-        bool machineEnabled = false;
-        if (moduleMap.TryGetValue("rx", out Module? rxM))
-        {
-            machineEnabled = rxM.ReceivedLowPulseEver;
-        }
+        //bool machineEnabled = false;
+        //if (moduleMap.TryGetValue("rx", out Module? rxM))
+        //{
+        //    machineEnabled = rxM.ReceivedLowPulseEver;
+        //}
 
-        return (lowPulses, highPulses, b.ToString(), machineEnabled);
+        return (lowPulses, highPulses);
     }
 
     record struct Pulse(string Source, Module Target, bool isHigh);
